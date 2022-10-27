@@ -1,5 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <libnfnetlink/libnfnetlink.h>
@@ -8,28 +21,14 @@
 #include <string.h>
 #include <stdbool.h>
 #include <netinet/ip.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
-#include <pthread.h>
-#include <signal.h>
 #include <arpa/inet.h>
-#include <limits.h>
-#include <assert.h>
-#include <math.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
 #include <stdint.h>
 #include <arpa/nameser.h>
-#include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netinet/if_ether.h>
-#include <unistd.h>
-#include <arpa/nameser.h>
 #include <sys/types.h>
 #include <resolv.h>
 #include <netinet/udp.h>
@@ -37,6 +36,9 @@
 #include <netinet/ip6.h>
 #include <stddef.h>
 #define DNS_QUEUE 9
+
+char *ip;
+int port;
 
 int first_connect = 1;
 int clientSocket;
@@ -54,9 +56,9 @@ int connect_to_server(){
 	/* Address family = Internet */
 	serverAddr.sin_family = AF_INET;
 	/* Set port number, using htons function to use proper byte order */
-	serverAddr.sin_port = htons(65432);
+	serverAddr.sin_port = htons(port);
 	/* Set IP address to localhost */
-	serverAddr.sin_addr.s_addr = inet_addr("192.168.31.128");
+	serverAddr.sin_addr.s_addr = inet_addr(ip);
 	/* Set all bits of the padding field to 0 */
 	memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
 	
@@ -106,6 +108,7 @@ int dns_parse(const unsigned char *msg, size_t len)
         //printf("Present in database: %s\n",buffer);
         char string1[] = "yes";
         if(!strcmp(string1,buffer)){
+	    printf("Dropped DNS request for domain :  %s\n",host);
             return 1;
         }
         else{
@@ -126,8 +129,8 @@ static int dns_packetHandler(struct nfq_q_handle * myQueue, struct nfgenmsg *msg
     int len = 0;
     int i,j;
     if ((header = nfq_get_msg_packet_hdr(pkt))) {
-    	pkt_queue_id = ntohl(header->packet_id);
-	//printf("packet ID in queue is %d\n", pkt_queue_id);
+        pkt_queue_id = ntohl(header->packet_id);
+        //printf("packet ID in queue is %d\n", pkt_queue_id);
     }
     
     if((len = nfq_get_payload(pkt, &packet)) == -1) {
@@ -183,8 +186,15 @@ static int dns_packetHandler(struct nfq_q_handle * myQueue, struct nfgenmsg *msg
     return 0;
 }
 
-int main()
+int main( int argc, char *argv[] )
 {
+     if( argc != 3 ) {
+      printf("usage : ad-blocker IP PORT\n");
+      return -1;
+     }
+     ip = argv[1];
+     port = atoi(argv[2]);
+     
     struct nfq_handle *nfqHandle = NULL;
     struct nfq_q_handle *myQueue = NULL;
     struct nfnl_handle *netlinkHandle = NULL;
@@ -227,7 +237,7 @@ int main()
     netlinkHandle = nfq_nfnlh(nfqHandle);
     fd = nfnl_fd(netlinkHandle);
     while ((res = recv(fd, buf, sizeof(buf), 0)) && res >= 0)
-	{
+    {
         //printf("Call nfq_handle_packet\n");
         nfq_handle_packet(nfqHandle, buf, res);
     }

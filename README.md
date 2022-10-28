@@ -1,6 +1,6 @@
 ****Implementation of Ad-Blokcer in RDK-B****
 
-ad-blocker.c will be running in the gateway and it will reach the server for the verdict.\n
+ad-blocker.c will be running in the gateway and it will reach the server for the verdict.
 Server is also a linux machine in the LAN.
 we will load the ad-host file to the local mongodb database in the linux machine.
 we need to have mongod.service running locally in the linux machine.

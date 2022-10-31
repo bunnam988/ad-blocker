@@ -1,8 +1,7 @@
 ***Implementation of Ad-Blocker in RDK-B***
 * Ad-blocker.c will be running in the gateway and it will reach the server for the verdict.
-* Server is also a linux machine in the LAN.
-* we will load the ad-host file to the local mongodb database in the linux machine.
-* we need to have mongod.service running locally in the linux machine.
-* Then we will run our server.py script in that machine, to act as a server.
-* Socket connetion will be established between the gateway and the server.
-* If any query comes from the Ad-Blocker from gateway it will send the reply by checking the database.
+* Server code is python based and can be deployed within LAN or internet.
+* we will load the ad-host file to the mongodb database in the server.
+* we need to have mongod.service running in the server.
+* Socket connection will be established between the gateway and the server.
+* If any query comes from the Ad-Blocker to server,it will send the reply by checking the database.
